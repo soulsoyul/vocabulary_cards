@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>영단어장</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon-B_SY1GJM.ico">
+  <script type="module" crossorigin src="/assets/index-BXk1CaWs.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-P0ZhUHsM.css">
+</head>
+<body>
+    <div class="container">
+        <h1>영단어장</h1>
+        <div id="auth-section">
+            <button onclick="login()">로그인</button>
+            <button onclick="signup()">회원가입</button>
+            <button onclick="logout()" style="display:none;">로그아웃</button>
+            <p id="user-status"></p>
+        </div>
+        <div class="card-section" style="display:none;">
+            <h2>단어 카드</h2>
+            <div class="card" onclick="flipCard()">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <p id="word">단어를 클릭하세요!</p>
+                    </div>
+                    <div class="card-back">
+                        <p id="meaning">뜻을 확인하세요!</p>
+                    </div>
+                </div>
+            </div>
+            <button onclick="addCard()">새 단어 추가</button>
+            <button onclick="nextCard()">다음 카드</button>
+        </div>
+        <div class="input-section" style="display:none;">
+            <h2>단어 확인</h2>
+            <input type="text" id="userWord" placeholder="영단어 입력">
+            <input type="text" id="userMeaning" placeholder="한글 뜻 입력">
+            <button onclick="checkAnswer()">확인</button>
+            <p id="result"></p>
+        </div>
+    </div>
+</body>
+</html>
