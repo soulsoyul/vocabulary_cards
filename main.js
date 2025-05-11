@@ -1,7 +1,4 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth'; // 명시적 가져오기 추가
-import { getFirestore, FieldValue } from 'firebase/firestore';
-
+// Firebase 초기화 (CDN 방식)
 console.log("main.js 로드됨");
 
 const firebaseConfig = {
@@ -15,10 +12,11 @@ const firebaseConfig = {
 
 let auth, db;
 try {
-    const app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app);
-    console.log("Firebase 초기화 성공", { auth }); // auth 객체 디버깅
+    // CDN 방식: firebase.initializeApp 호출
+    const app = firebase.initializeApp(firebaseConfig);
+    auth = firebase.auth(); // CDN 방식: app 인스턴스 없이 직접 호출
+    db = firebase.firestore(); // CDN 방식: app 인스턴스 없이 직접 호출
+    console.log("Firebase 초기화 성공");
 } catch (error) {
     console.error("Firebase 초기화 오류:", error.message);
     alert("Firebase 초기화 실패: " + error.message);
@@ -29,6 +27,7 @@ let cards = [];
 let currentCardIndex = 0;
 let currentUser = null;
 
+// 인증 상태 변경 감지
 auth.onAuthStateChanged(user => {
     console.log("인증 상태 변경:", user ? user.email : "로그아웃");
     currentUser = user;
@@ -52,6 +51,7 @@ auth.onAuthStateChanged(user => {
     }
 });
 
+// 전역 함수로 노출
 window.login = function() {
     if (!auth) {
         console.error("auth가 초기화되지 않았습니다.");
@@ -101,7 +101,7 @@ window.signup = function() {
     console.log("auth 객체 상태:", auth ? "auth 존재" : "auth 없음");
     try {
         console.log("auth.createUserWithEmailAndPassword 호출 시작");
-        createUserWithEmailAndPassword(auth, email, password) // 명시적 호출
+        auth.createUserWithEmailAndPassword(email, password)
             .then(userCredential => {
                 console.log("회원가입 성공:", userCredential.user.email);
                 alert("회원가입 성공! 로그인 상태입니다.");
@@ -143,7 +143,7 @@ window.addCard = function() {
         db.collection('users').doc(currentUser.uid).collection('cards').add({
             word: word,
             meaning: meaning,
-            timestamp: FieldValue.serverTimestamp()
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
         }).then(() => loadCards());
     }
 };
