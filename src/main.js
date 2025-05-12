@@ -1,20 +1,12 @@
-// Firebase 설정 (가정: firebase-config.js에서 가져옴)
+// Firebase 설정 (firebase-config.js에서 가져옴)
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs } from 'firebase/firestore';
-
-// Firebase 설정 (your-config.js에 실제 값 입력)
-const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
-};
+import { firebaseConfig } from './firebase-config.js';
 
 // Firebase 초기화
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+console.log("Firestore 인스턴스:", db);
 
 // 단어 저장용 배열
 let cards = [];
@@ -59,14 +51,14 @@ function updateCardDisplay() {
         wordElement.textContent = currentCard.word;
         meaningElement.textContent = currentCard.meaning;
     }
+    console.log("UI 업데이트 후 cards:", cards);
 }
 
-// 카드 뒤집기
+// 나머지 함수 (flipCard, nextCard, checkAnswer, signup, login, logout) 동일
 window.flipCard = function () {
     document.querySelector('.card').classList.toggle('flipped');
 };
 
-// 다음 카드
 let currentIndex = 0;
 window.nextCard = function () {
     if (cards.length === 0) return;
@@ -78,7 +70,6 @@ window.nextCard = function () {
     document.querySelector('.card').classList.remove('flipped');
 };
 
-// 퀴즈 확인
 window.checkAnswer = function () {
     const userWord = document.getElementById('userWord').value;
     const userMeaning = document.getElementById('userMeaning').value;
@@ -91,31 +82,28 @@ window.checkAnswer = function () {
     }
 };
 
-// 로그인/회원가입 로직 (기존 동작 유지)
 window.signup = function () {
     const email = prompt("이메일을 입력하세요:");
     const password = prompt("비밀번호를 입력하세요:");
     if (email && password) {
-        // Firebase Authentication 사용 가정 (추가 설정 필요)
         console.log(`회원가입 시도: ${email}`);
         alert(`회원가입 성공: ${email}`);
         document.getElementById('auth-section').style.display = 'none';
         document.querySelector('.card-section').style.display = 'block';
         document.querySelector('.input-section').style.display = 'block';
-        loadCards(); // 로그인 후 카드 로드
+        loadCards();
     }
 };
 
 window.login = function () {
     const email = prompt("이메일을 입력하세요:");
     const password = prompt("비밀번호를 입력하세요:");
-    // Firebase Authentication 사용 가정
     console.log(`로그인 시도: ${email}`);
     alert("로그인 성공!");
     document.getElementById('auth-section').style.display = 'none';
     document.querySelector('.card-section').style.display = 'block';
     document.querySelector('.input-section').style.display = 'block';
-    loadCards(); // 로그인 후 카드 로드
+    loadCards();
 };
 
 window.logout = function () {
