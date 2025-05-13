@@ -31,6 +31,7 @@ window.loadCards = async function () {
         return;
     }
     try {
+        console.log("카드 로드 시도, Firestore db:", db);
         const querySnapshot = await getDocs(collection(db, `users/${currentUser.uid}/cards`));
         cards = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         console.log("카드 로드 성공:", cards);
@@ -49,6 +50,7 @@ window.addCard = async function () {
     const meaning = prompt("단어 뜻을 입력하세요:");
     if (word && meaning) {
         try {
+            console.log("새 단어 추가 버튼 클릭됨, Firestore db:", db);
             await addDoc(collection(db, `users/${currentUser.uid}/cards`), { word, meaning });
             console.log("새 단어 추가 성공:", { word, meaning });
             await loadCards();
@@ -63,6 +65,7 @@ window.addCard = async function () {
 };
 
 function updateCardDisplay() {
+    console.log("카드 업데이트");
     const wordElement = document.getElementById('word');
     const meaningElement = document.getElementById('meaning');
     if (cards.length > 0) {
@@ -83,6 +86,7 @@ window.flipCard = function () {
 
 let currentIndex = 0;
 window.nextCard = function () {
+    console.log("다음 카드 버튼 클릭됨");
     if (cards.length === 0) return;
     currentIndex = (currentIndex + 1) % cards.length;
     const wordElement = document.getElementById('word');
@@ -93,6 +97,7 @@ window.nextCard = function () {
 };
 
 window.checkAnswer = function () {
+    console.log("정답 확인 버튼 클릭됨");
     const userWord = document.getElementById('userWord').value;
     const userMeaning = document.getElementById('userMeaning').value;
     const resultElement = document.getElementById('result');
@@ -145,6 +150,8 @@ window.logout = async function () {
         document.getElementById('auth-section').style.display = 'block';
         document.querySelector('.card-section').style.display = 'none';
         document.querySelector('.input-section').style.display = 'none';
+        cards = [];
+        updateCardDisplay();
     } catch (error) {
         console.error("로그아웃 실패:", error);
     }
