@@ -1,25 +1,26 @@
+// Firebase 모듈 임포트
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
+// Firebase 설정
 import { firebaseConfig } from './firebase-config.js';
 
+// Firebase 초기화
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const db = getFirestore(app); // Firestore 인스턴스
 const auth = getAuth(app);
-console.log("Firebase 초기화 성공:", db);
+console.log("Firebase 초기화 성공 - db:", db);
 
 let cards = [];
 let currentUser = null;
 
-// Firestore 함수를 직접 사용하도록 수정
-const getCardsCollection = (userId) => collection(db, `users/${userId}/cards`);
-
+// 인증 상태 감지
 onAuthStateChanged(auth, (user) => {
     if (user) {
         console.log("인증 상태 변경:", user.email);
         currentUser = user;
-        loadCards();
+        loadCards(db); // db 전달
     } else {
         console.log("로그아웃 상태");
         currentUser = null;
@@ -28,14 +29,15 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-window.loadCards = async function () {
+// 카드 로드 함수 (db 전달)
+window.loadCards = async function (firestoreDb) {
     if (!currentUser) {
         console.log("로그인 필요");
         return;
     }
     try {
-        console.log("카드 로드 시도");
-        const querySnapshot = await getDocs(getCardsCollection(currentUser.uid));
+        console.log("카드 로드 시도 - firestoreDb:", firestoreDb);
+        const querySnapshot = await getDocs(collection(firestoreDb, `users/${currentUser.uid}/cards`));
         cards = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         console.log("카드 로드 성공:", cards);
         updateCardDisplay();
@@ -44,7 +46,8 @@ window.loadCards = async function () {
     }
 };
 
-window.addCard = async function () {
+// 새 단어 추가 함수 (db 전달)
+window.addCard = async function (firestoreDb) {
     if (!currentUser) {
         alert("로그인 후 단어를 추가할 수 있습니다.");
         return;
@@ -53,10 +56,10 @@ window.addCard = async function () {
     const meaning = prompt("단어 뜻을 입력하세요:");
     if (word && meaning) {
         try {
-            console.log("새 단어 추가 버튼 클릭됨");
-            await addDoc(getCardsCollection(currentUser.uid), { word, meaning });
+            console.log("새 단어 추가 버튼 클릭됨 - firestoreDb:", firestoreDb);
+            await addDoc(collection(firestoreDb, `users/${currentUser.uid}/cards`), { word, meaning });
             console.log("새 단어 추가 성공:", { word, meaning });
-            await loadCards();
+            await loadCards(firestoreDb);
             alert("단어가 추가되었습니다!");
         } catch (error) {
             console.error("단어 추가 실패:", error);
@@ -122,6 +125,7 @@ window.signup = async function () {
             document.getElementById('auth-section').style.display = 'none';
             document.querySelector('.card-section').style.display = 'block';
             document.querySelector('.input-section').style.display = 'block';
+            loadCards(db); // db 전달
         } catch (error) {
             console.error("회원가입 실패:", error);
             alert("회원가입 실패: " + error.message);
@@ -139,6 +143,7 @@ window.login = async function () {
             document.getElementById('auth-section').style.display = 'none';
             document.querySelector('.card-section').style.display = 'block';
             document.querySelector('.input-section').style.display = 'block';
+            loadCards(db); // db 전달
         } catch (error) {
             console.error("로그인 실패:", error);
             alert("로그인 실패: " + error.message);
@@ -160,4 +165,5 @@ window.logout = async function () {
     }
 };
 
-loadCards();
+// 초기 카드 로드
+loadCards(db); // db 전달
