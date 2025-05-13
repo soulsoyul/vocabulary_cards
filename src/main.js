@@ -1,21 +1,38 @@
-// Firebase 설정 (firebase-config.js에서 가져옴)
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs } from 'firebase/firestore';
+import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+
 import { firebaseConfig } from './firebase-config.js';
 
-// Firebase 초기화
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-console.log("Firestore 인스턴스:", db);
+const auth = getAuth(app);
+console.log("Firebase 초기화 성공:", db);
 
-// 단어 저장용 배열
 let cards = [];
+let currentUser = null;
 
-// 카드 로드
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        console.log("인증 상태 변경:", user.email);
+        currentUser = user;
+        loadCards();
+    } else {
+        console.log("로그아웃 상태");
+        currentUser = null;
+        cards = [];
+        updateCardDisplay();
+    }
+});
+
 window.loadCards = async function () {
+    if (!currentUser) {
+        console.log("로그인 필요");
+        return;
+    }
     try {
-        const querySnapshot = await getDocs(collection(db, "cards"));
-        cards = querySnapshot.docs.map(doc => doc.data());
+        const querySnapshot = await getDocs(collection(db, `users/${currentUser.uid}/cards`));
+        cards = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         console.log("카드 로드 성공:", cards);
         updateCardDisplay();
     } catch (error) {
@@ -23,15 +40,18 @@ window.loadCards = async function () {
     }
 };
 
-// 새 단어 추가
 window.addCard = async function () {
+    if (!currentUser) {
+        alert("로그인 후 단어를 추가할 수 있습니다.");
+        return;
+    }
     const word = prompt("새 단어를 입력하세요:");
     const meaning = prompt("단어 뜻을 입력하세요:");
     if (word && meaning) {
         try {
-            await addDoc(collection(db, "cards"), { word, meaning });
+            await addDoc(collection(db, `users/${currentUser.uid}/cards`), { word, meaning });
             console.log("새 단어 추가 성공:", { word, meaning });
-            await loadCards(); // 카드 재로드
+            await loadCards();
             alert("단어가 추가되었습니다!");
         } catch (error) {
             console.error("단어 추가 실패:", error);
@@ -42,20 +62,22 @@ window.addCard = async function () {
     }
 };
 
-// 카드 UI 업데이트
 function updateCardDisplay() {
     const wordElement = document.getElementById('word');
     const meaningElement = document.getElementById('meaning');
     if (cards.length > 0) {
         const currentCard = cards[cards.length - 1];
-        wordElement.textContent = currentCard.word;
-        meaningElement.textContent = currentCard.meaning;
+        wordElement.textContent = currentCard.word || "단어를 추가하세요!";
+        meaningElement.textContent = currentCard.meaning || "단어를 추가하세요!";
+    } else {
+        wordElement.textContent = "단어를 추가하세요!";
+        meaningElement.textContent = "단어를 추가하세요!";
     }
     console.log("UI 업데이트 후 cards:", cards);
 }
 
-// 나머지 함수 (flipCard, nextCard, checkAnswer, signup, login, logout) 동일
 window.flipCard = function () {
+    console.log("카드 클릭됨");
     document.querySelector('.card').classList.toggle('flipped');
 };
 
@@ -82,36 +104,50 @@ window.checkAnswer = function () {
     }
 };
 
-window.signup = function () {
+window.signup = async function () {
     const email = prompt("이메일을 입력하세요:");
     const password = prompt("비밀번호를 입력하세요:");
     if (email && password) {
-        console.log(`회원가입 시도: ${email}`);
-        alert(`회원가입 성공: ${email}`);
-        document.getElementById('auth-section').style.display = 'none';
-        document.querySelector('.card-section').style.display = 'block';
-        document.querySelector('.input-section').style.display = 'block';
-        loadCards();
+        try {
+            await createUserWithEmailAndPassword(auth, email, password);
+            alert(`회원가입 성공: ${email}`);
+            document.getElementById('auth-section').style.display = 'none';
+            document.querySelector('.card-section').style.display = 'block';
+            document.querySelector('.input-section').style.display = 'block';
+        } catch (error) {
+            console.error("회원가입 실패:", error);
+            alert("회원가입 실패: " + error.message);
+        }
     }
 };
 
-window.login = function () {
+window.login = async function () {
     const email = prompt("이메일을 입력하세요:");
     const password = prompt("비밀번호를 입력하세요:");
-    console.log(`로그인 시도: ${email}`);
-    alert("로그인 성공!");
-    document.getElementById('auth-section').style.display = 'none';
-    document.querySelector('.card-section').style.display = 'block';
-    document.querySelector('.input-section').style.display = 'block';
-    loadCards();
+    if (email && password) {
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            alert("로그인 성공!");
+            document.getElementById('auth-section').style.display = 'none';
+            document.querySelector('.card-section').style.display = 'block';
+            document.querySelector('.input-section').style.display = 'block';
+        } catch (error) {
+            console.error("로그인 실패:", error);
+            alert("로그인 실패: " + error.message);
+        }
+    }
 };
 
-window.logout = function () {
-    alert("로그아웃 되었습니다.");
-    document.getElementById('auth-section').style.display = 'block';
-    document.querySelector('.card-section').style.display = 'none';
-    document.querySelector('.input-section').style.display = 'none';
+window.logout = async function () {
+    try {
+        await signOut(auth);
+        alert("로그아웃 되었습니다.");
+        document.getElementById('auth-section').style.display = 'block';
+        document.querySelector('.card-section').style.display = 'none';
+        document.querySelector('.input-section').style.display = 'none';
+    } catch (error) {
+        console.error("로그아웃 실패:", error);
+    }
 };
 
-// 초기 카드 로드
 loadCards();
