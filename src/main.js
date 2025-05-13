@@ -12,6 +12,9 @@ console.log("Firebase 초기화 성공:", db);
 let cards = [];
 let currentUser = null;
 
+// Firestore 함수를 직접 사용하도록 수정
+const getCardsCollection = (userId) => collection(db, `users/${userId}/cards`);
+
 onAuthStateChanged(auth, (user) => {
     if (user) {
         console.log("인증 상태 변경:", user.email);
@@ -31,8 +34,8 @@ window.loadCards = async function () {
         return;
     }
     try {
-        console.log("카드 로드 시도, Firestore db:", db);
-        const querySnapshot = await getDocs(collection(db, `users/${currentUser.uid}/cards`));
+        console.log("카드 로드 시도");
+        const querySnapshot = await getDocs(getCardsCollection(currentUser.uid));
         cards = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         console.log("카드 로드 성공:", cards);
         updateCardDisplay();
@@ -50,8 +53,8 @@ window.addCard = async function () {
     const meaning = prompt("단어 뜻을 입력하세요:");
     if (word && meaning) {
         try {
-            console.log("새 단어 추가 버튼 클릭됨, Firestore db:", db);
-            await addDoc(collection(db, `users/${currentUser.uid}/cards`), { word, meaning });
+            console.log("새 단어 추가 버튼 클릭됨");
+            await addDoc(getCardsCollection(currentUser.uid), { word, meaning });
             console.log("새 단어 추가 성공:", { word, meaning });
             await loadCards();
             alert("단어가 추가되었습니다!");
